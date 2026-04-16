@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的雲端記帳本</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f4f6; }
+        .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn-loading { pointer-events: none; opacity: 0.7; }
+        .collapse-content { transition: max-height 0.3s ease-out, opacity 0.3s ease-out; overflow: hidden; }
+        .collapse-closed { max-height: 0; opacity: 0; pointer-events: none; }
+        .collapse-open { max-height: 1000px; opacity: 1; }
+        .rotate-180 { transform: rotate(180deg); }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- 標題與統計摘要 -->
+        <header class="mb-8 flex justify-between items-end">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
+                    <i data-lucide="wallet" class="text-blue-600"></i> 雲端記帳本
+                </h1>
+                <p class="text-gray-500 mt-2 text-sm md:text-base">資料庫：Google Sheets CSV</p>
+            </div>
+            <button onclick="fetchData()" class="p-2 bg-white rounded-full shadow hover:bg-gray-100 transition-colors">
+                <i data-lucide="refresh-cw" class="text-gray-600"></i>
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="card p-6 border-l-4 border-green-500">
+                <p class="text-sm text-gray-500 font-medium">總收入</p>
+                <p id="total-income" class="text-2xl font-bold text-green-600">$ 0</p>
+            </div>
+            <div class="card p-6 border-l-4 border-red-500">
+                <p class="text-sm text-gray-500 font-medium">總支出</p>
+                <p id="total-expense" class="text-2xl font-bold text-red-600">$ 0</p>
+            </div>
+            <div class="card p-6 border-l-4 border-blue-500">
+                <p class="text-sm text-gray-500 font-medium">結餘</p>
+                <p id="balance" class="text-2xl font-bold text-blue-600">$ 0</p>
+            </div>
+        </div>
+
+        <!-- 記帳表單 -->
+        <section class="card p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i data-lucide="plus-circle"></i> 新增紀錄
+            </h2>
+            <form id="record-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">類型</label>
+                    <div class="mt-2 flex gap-4 p-2 bg-gray-50 rounded-md border border-gray-200">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" name="type" value="expense" checked onchange="updateCategoryOptions()" class="text-red-600 focus:ring-red-500">
+                            <span class="ml-2 text-red-600 font-medium">支出</span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" name="type" value="income" onchange="updateCategoryOptions()" class="text-green-600 focus:ring-green-500">
+                            <span class="ml-2 text-green-600 font-medium">收入</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">類別</label>
+                    <select id="category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border bg-white">
+                        <option value="">載入中...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">項目</label>
+                    <input type="text" id="item" placeholder="例如：排骨飯" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">金額</label>
+                    <input type="number" id="amount" placeholder="金額" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+                </div>
+                <div class="lg:col-span-2 flex justify-end items-center gap-4">
+                    <div id="submit-status" class="text-sm"></div>
+                    <button type="submit" id="submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center gap-2">
+                        <i data-lucide="save"></i> 儲存紀錄
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- 可收合的資料列表 -->
+        <section class="card overflow-hidden">
+            <button onclick="toggleHistory()" class="w-full p-6 flex justify-between items-center hover:bg-gray-50 transition-colors focus:outline-none">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i data-lucide="list"></i> 最近紀錄
+                </h2>
+                <i id="chevron-icon" data-lucide="chevron-down" class="transition-transform duration-300"></i>
+            </button>
+            
+            <div id="history-content" class="collapse-content collapse-open">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-t border-gray-100">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-6 py-3 text-sm font-semibold text-gray-600">時間</th>
+                                <th class="px-6 py-3 text-sm font-semibold text-gray-600">類別</th>
+                                <th class="px-6 py-3 text-sm font-semibold text-gray-600">項目</th>
+                                <th class="px-6 py-3 text-sm font-semibold text-gray-600 text-right">支出</th>
+                                <th class="px-6 py-3 text-sm font-semibold text-gray-600 text-right">收入</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body" class="divide-y divide-gray-200 text-sm md:text-base">
+                            <!-- 資料將由 JS 填入 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="loading" class="p-10 text-center text-gray-500">
+                    正在同步雲端資料...
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // 設定區
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIP8cEecVXdOM4QJvjQNsyLXvvPd260IBTeJwtiAweiBJnMeB8rmbHhmMaWIs8bU9AF1VccA6x3q_2/pub?output=csv';
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz9eG2fowxLQ4DolbPqaVhyHt30WH4eO7uBNw4xKyygeYeFhk4ZD29xmEJvNlGj5Ltz/exec'; 
+        const API_KEY = 'YOUR_SECRET_KEY_HERE';
+
+        // 存放類別資料
+        let categories = {
+            expense: [],
+            income: []
+        };
+
+        lucide.createIcons();
+
+        function toggleHistory() {
+            const content = document.getElementById('history-content');
+            const icon = document.getElementById('chevron-icon');
+            
+            if (content.classList.contains('collapse-open')) {
+                content.classList.remove('collapse-open');
+                content.classList.add('collapse-closed');
+                icon.classList.add('rotate-180');
+            } else {
+                content.classList.remove('collapse-closed');
+                content.classList.add('collapse-open');
+                icon.classList.remove('rotate-180');
+            }
+        }
+
+        async function fetchData() {
+            const loading = document.getElementById('loading');
+            loading.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`${CSV_URL}&t=${new Date().getTime()}`);
+                const csvText = await response.text();
+                
+                Papa.parse(csvText, {
+                    header: false,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const rawData = results.data;
+                        
+                        let expSet = new Set();
+                        let incSet = new Set();
+
+                        // 修改處：遍歷抓取 Column K (索引 10) 與 Column L (索引 11)
+                        rawData.forEach((row, index) => {
+                            if (index === 0) return; // 跳過標題
+
+                            // 索引 10 為第 11 欄 (K), 索引 11 為第 12 欄 (L)
+                            if (row[10] && row[10].trim() !== "") expSet.add(row[10].trim());
+                            if (row[11] && row[11].trim() !== "") incSet.add(row[11].trim());
+                        });
+
+                        categories.expense = Array.from(expSet);
+                        categories.income = Array.from(incSet);
+                        updateCategoryOptions();
+
+                        const recordData = rawData.slice(1).map(row => ({
+                            '時間': row[0],
+                            '類別': row[1],
+                            '項目': row[2],
+                            '支出': row[3],
+                            '收入': row[4]
+                        })).filter(r => r['時間']);
+                        
+                        renderData(recordData);
+                    }
+                });
+            } catch (error) {
+                console.error('讀取失敗:', error);
+                loading.innerText = '讀取失敗，請確認網路或發布設定';
+            }
+        }
+
+        function updateCategoryOptions() {
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const select = document.getElementById('category');
+            const options = categories[type] || [];
+            
+            select.innerHTML = options.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            
+            if (options.length === 0) {
+                select.innerHTML = '<option value="">請在試算表 Column K/L 填入類別</option>';
+            }
+        }
+
+        function renderData(data) {
+            const tbody = document.getElementById('data-table-body');
+            document.getElementById('loading').classList.add('hidden');
+            tbody.innerHTML = '';
+
+            let totalIn = 0;
+            let totalOut = 0;
+
+            const reversedData = [...data].reverse();
+
+            reversedData.forEach(row => {
+                const tr = document.createElement('tr');
+                const income = parseFloat(row['收入']) || 0;
+                const expense = parseFloat(row['支出']) || 0;
+                
+                totalIn += income;
+                totalOut += expense;
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-gray-500 text-xs md:text-sm">${row['時間'] || '-'}</td>
+                    <td class="px-6 py-4 font-medium">${row['類別'] || '-'}</td>
+                    <td class="px-6 py-4">${row['項目'] || '-'}</td>
+                    <td class="px-6 py-4 text-right text-red-600 font-medium">${expense > 0 ? '$' + expense.toLocaleString() : ''}</td>
+                    <td class="px-6 py-4 text-right text-green-600 font-medium">${income > 0 ? '$' + income.toLocaleString() : ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('total-income').innerText = `$ ${totalIn.toLocaleString()}`;
+            document.getElementById('total-expense').innerText = `$ ${totalOut.toLocaleString()}`;
+            const net = totalIn - totalOut;
+            document.getElementById('balance').innerText = `$ ${net.toLocaleString()}`;
+            document.getElementById('balance').className = `text-2xl font-bold ${net >= 0 ? 'text-blue-600' : 'text-orange-600'}`;
+        }
+
+        document.getElementById('record-form').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submit-btn');
+            const status = document.getElementById('submit-status');
+            
+            btn.classList.add('btn-loading');
+            status.innerText = '儲存中...';
+            status.className = 'text-sm text-blue-600';
+
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const amount = document.getElementById('amount').value;
+            
+            const payload = {
+                key: API_KEY,
+                timestamp: new Date().toLocaleString('zh-TW', { hour12: false }),
+                category: document.getElementById('category').value,
+                item: document.getElementById('item').value,
+                expense: type === 'expense' ? amount : 0,
+                income: type === 'income' ? amount : 0,
+                lat: 0,
+                lng: 0
+            };
+
+            try {
+                await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload)
+                });
+
+                status.innerText = '儲存成功！';
+                status.className = 'text-sm text-green-600';
+                
+                document.getElementById('item').value = '';
+                document.getElementById('amount').value = '';
+
+                setTimeout(() => {
+                    fetchData();
+                    status.innerText = '';
+                    btn.classList.remove('btn-loading');
+                }, 2000);
+
+            } catch (error) {
+                status.innerText = '儲存發生錯誤';
+                status.className = 'text-sm text-red-600';
+                btn.classList.remove('btn-loading');
+            }
+        };
+
+        window.onload = fetchData;
+    </script>
+</body>
+</html>
