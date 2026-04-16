@@ -3,11 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的雲端記帳本</title>
+    <title>Bob帳務系統</title>
+    
+    <!-- Web App / PWA 圖示設定 -->
+    <!-- iOS 加入主畫面圖示 -->
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Bobkao0527/bobmoney/a15ae2912099cceec16a39b4cd167315365828ad/bobmoney.jpeg">
+    <!-- Android / Chrome 顯示圖示 -->
+    <link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/Bobkao0527/bobmoney/a15ae2912099cceec16a39b4cd167315365828ad/bobmoney.jpeg">
+    
+    <!-- Web App 啟動畫面與全螢幕設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bob帳務">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- 使用 Chart.js 庫 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
@@ -22,6 +33,15 @@
         #balance-card { transition: background-color 0.8s ease; }
         
         canvas { max-width: 100% !important; height: auto !important; }
+        
+        .app-icon {
+            width: 36px;
+            height: 36px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body class="p-4 md:p-8 text-gray-800">
@@ -29,8 +49,12 @@
     <div class="max-w-4xl mx-auto">
         <!-- 頂部標題與刷新按鈕 -->
         <header class="mb-8 flex justify-between items-center">
-            <h1 class="text-2xl font-bold flex items-center gap-2">
-                <i data-lucide="wallet" class="text-blue-600"></i> Bob帳務系統
+            <h1 class="text-2xl font-bold flex items-center gap-3">
+                <img src="https://raw.githubusercontent.com/Bobkao0527/bobmoney/a15ae2912099cceec16a39b4cd167315365828ad/bobmoney.jpeg" 
+                     alt="App Icon" 
+                     class="app-icon"
+                     onerror="this.src='https://ui-avatars.com/api/?name=Bob+Money&background=2563eb&color=fff'">
+                Bob帳務系統
             </h1>
             <button onclick="fetchData()" class="p-2 bg-white rounded-full shadow hover:bg-gray-100 transition-colors">
                 <i data-lucide="refresh-cw" class="w-5 h-5 text-gray-600"></i>
@@ -120,7 +144,7 @@
             <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-gray-700">
                 <i data-lucide="plus-circle" class="w-5 h-5 text-blue-500"></i> 新增紀錄
             </h2>
-            <form id="record-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <form id="record-form" class="grid grid-cols-1 md:flex-row lg:grid-cols-4 gap-4 items-end">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">類型</label>
                     <div class="mt-2 flex gap-4 p-2 bg-gray-50 rounded-md border border-gray-200">
@@ -193,7 +217,6 @@
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIP8cEecVXdOM4QJvjQNsyLXvvPd260IBTeJwtiAweiBJnMeB8rmbHhmMaWIs8bU9AF1VccA6x3q_2/pub?output=csv';
-        // 已更新為新的 Web App 網址
         const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwx60KulJZs0v7QSIzNKb7-oAXFxNMlh5TT2maeCc2Ur-czliwwlFUP4LmCVUzzK2Y/exec'; 
         const API_KEY = 'YOUR_SECRET_KEY_HERE';
 
@@ -363,8 +386,6 @@
             });
 
             const currentGrandBalance = grandTotalIn - grandTotalOut;
-            
-            // 更新 UI 數字
             document.getElementById('total-income').innerText = `$ ${viewIn.toLocaleString()}`;
             document.getElementById('total-expense').innerText = `$ ${viewOut.toLocaleString()}`;
             const viewNet = viewIn - viewOut;
@@ -372,26 +393,13 @@
             document.getElementById('balance').className = `text-sm md:text-lg font-bold ${viewNet >= 0 ? 'text-blue-600' : 'text-orange-600'}`;
             document.getElementById('grand-balance').innerText = `$ ${currentGrandBalance.toLocaleString()}`;
 
-            // 動態背景色邏輯：固定數值範圍
-            // < 300: 紅色 (HSL 0)
-            // > 800: 綠色 (HSL 140)
-            // 300 ~ 800: 線性漸變
             const card = document.getElementById('balance-card');
-            
             let h = 0;
-            if (currentGrandBalance <= 300) {
-                h = 0; // 紅色
-            } else if (currentGrandBalance >= 800) {
-                h = 140; // 綠色
-            } else {
-                // 在 300 和 800 之間計算比例 (0.0 ~ 1.0)
-                const ratio = (currentGrandBalance - 300) / (800 - 300);
-                h = Math.round(ratio * 140);
-            }
+            if (currentGrandBalance <= 300) h = 0; 
+            else if (currentGrandBalance >= 800) h = 140; 
+            else h = Math.round(((currentGrandBalance - 300) / (800 - 300)) * 140);
             
-            const s = 65; // 飽和度
-            const l = 40; // 亮度 (深色質感)
-            card.style.backgroundColor = `hsl(${h}, ${s}%, ${l}%)`;
+            card.style.backgroundColor = `hsl(${h}, 65%, 40%)`;
         }
 
         function updateCharts() {
@@ -419,16 +427,12 @@
 
             const labels = Object.keys(catMap);
             const values = Object.values(catMap);
-
             const ctx = document.getElementById('pieChart').getContext('2d');
             if (pieChart) pieChart.destroy();
             
             if (labels.length === 0) {
-                ctx.save();
-                ctx.font = "14px Arial";
-                ctx.textAlign = "center";
-                ctx.fillText("尚無支出數據", ctx.canvas.width/2, ctx.canvas.height/2);
-                ctx.restore();
+                ctx.save(); ctx.font = "14px Arial"; ctx.textAlign = "center";
+                ctx.fillText("尚無支出數據", ctx.canvas.width/2, ctx.canvas.height/2); ctx.restore();
                 return;
             }
 
@@ -442,27 +446,10 @@
                     }]
                 },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
                 }
             });
-        }
-
-        function calculateMA(data, period) {
-            let result = [];
-            for (let i = 0; i < data.length; i++) {
-                if (i < period - 1) {
-                    result.push(null);
-                    continue;
-                }
-                let sum = 0;
-                for (let j = 0; j < period; j++) {
-                    sum += data[i - j];
-                }
-                result.push(sum / period);
-            }
-            return result;
         }
 
         function updateTrendChart(data) {
@@ -471,12 +458,10 @@
             let title = '支出趨勢 (單位：日)';
 
             if (currentView === 'day') {
-                mode = 'hour';
-                title = '今日支出分佈 (單位：小時)';
+                mode = 'hour'; title = '今日支出分佈';
                 for(let i=0; i<24; i++) groupMap[`${String(i).padStart(2, '0')}:00`] = 0;
             } else if (currentView === 'year') {
-                mode = 'month';
-                title = '年度支出趨勢 (單位：月)';
+                mode = 'month'; title = '年度支出趨勢';
             }
 
             document.getElementById('trend-title').innerText = title;
@@ -485,74 +470,33 @@
             dataSource.forEach(r => {
                 if (!r.dateObj) return;
                 let key;
-                if (mode === 'hour') {
-                    key = `${String(r.dateObj.getHours()).padStart(2, '0')}:00`;
-                } else if (mode === 'month') {
-                    key = `${r.dateObj.getFullYear()}/${String(r.dateObj.getMonth() + 1).padStart(2, '0')}`;
-                } else {
-                    key = `${r.dateObj.getFullYear()}/${r.dateObj.getMonth() + 1}/${r.dateObj.getDate()}`;
-                }
+                if (mode === 'hour') key = `${String(r.dateObj.getHours()).padStart(2, '0')}:00`;
+                else if (mode === 'month') key = `${r.dateObj.getFullYear()}/${String(r.dateObj.getMonth() + 1).padStart(2, '0')}`;
+                else key = `${r.dateObj.getFullYear()}/${r.dateObj.getMonth() + 1}/${r.dateObj.getDate()}`;
                 groupMap[key] = (groupMap[key] || 0) + r.expense;
             });
 
-            const labels = Object.keys(groupMap).sort((a, b) => {
-                if (mode === 'hour') return parseInt(a) - parseInt(b);
-                return new Date(a) - new Date(b);
-            });
+            const labels = Object.keys(groupMap).sort((a, b) => mode === 'hour' ? parseInt(a) - parseInt(b) : new Date(a) - new Date(b));
             const values = labels.map(l => groupMap[l]);
-
-            const showMA = (mode !== 'hour');
-            const ma5 = showMA ? calculateMA(values, 5) : [];
-            const ma10 = showMA ? calculateMA(values, 10) : [];
-
             const ctx = document.getElementById('trendChart').getContext('2d');
             if (trendChart) trendChart.destroy();
 
-            const datasets = [
-                { 
-                    label: '支出金額', 
-                    data: values, 
-                    backgroundColor: mode === 'hour' ? 'rgba(139, 92, 246, 0.6)' : 'rgba(59, 130, 246, 0.4)', 
-                    borderRadius: 4 
-                }
-            ];
-
-            if (showMA) {
-                datasets.push({ label: 'MA5', data: ma5, type: 'line', borderColor: '#ef4444', borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3 });
-                datasets.push({ label: 'MA10', data: ma10, type: 'line', borderColor: '#f59e0b', borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3 });
-            }
-
             trendChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels, datasets },
+                data: { labels, datasets: [{ label: '支出金額', data: values, backgroundColor: 'rgba(59, 130, 246, 0.4)', borderRadius: 4 }] },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
-                    },
-                    scales: { 
-                        y: { beginAtZero: true, ticks: { font: { size: 9 } } }, 
-                        x: { 
-                            ticks: { 
-                                font: { size: 9 },
-                                autoSkip: true, 
-                                maxTicksLimit: 12 
-                            } 
-                        } 
-                    }
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 }, autoSkip: true, maxTicksLimit: 12 } } }
                 }
             });
         }
 
         function updateWaterfallChart(data) {
             if (data.length === 0) return;
-
             const labels = ['初始'];
             const waterfallData = [[0, 0]]; 
             const colors = ['#64748b']; 
-            
             let runningBalance = 0;
             const historyValues = [0];
 
@@ -560,7 +504,6 @@
                 const diff = r.income - r.expense;
                 const start = runningBalance;
                 runningBalance += diff;
-                
                 labels.push(`${r.dateObj.getMonth()+1}/${r.dateObj.getDate()} ${r.item}`);
                 waterfallData.push([start, runningBalance]);
                 colors.push(diff >= 0 ? '#22c55e' : '#ef4444');
@@ -570,79 +513,18 @@
             labels.push('目前結餘');
             waterfallData.push([0, runningBalance]);
             colors.push('#3b82f6');
-            historyValues.push(runningBalance);
-
-            const maxV = Math.max(...historyValues);
-            const minV = Math.min(...historyValues);
-            const avgV = historyValues.reduce((a,b) => a+b, 0) / historyValues.length;
 
             const ctx = document.getElementById('waterfallChart').getContext('2d');
             if (waterfallChart) waterfallChart.destroy();
 
             waterfallChart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '餘額變動',
-                        data: waterfallData,
-                        backgroundColor: colors,
-                        borderWidth: 0,
-                        barPercentage: 0.9,
-                        categoryPercentage: 0.9
-                    }]
-                },
+                data: { labels, datasets: [{ data: waterfallData, backgroundColor: colors }] },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => {
-                                    const val = context.raw;
-                                    const diff = val[1] - val[0];
-                                    return `變動: ${diff > 0 ? '+' : ''}${diff.toLocaleString()} (餘額: ${val[1].toLocaleString()})`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            ticks: { font: { size: 9 } },
-                            grid: { color: 'rgba(0,0,0,0.05)' }
-                        },
-                        x: { display: false }
-                    }
-                },
-                plugins: [{
-                    id: 'thresholdLines',
-                    afterDraw: (chart) => {
-                        const { ctx, chartArea: { left, right }, scales: { y } } = chart;
-                        ctx.save();
-                        
-                        const drawLine = (val, color, label) => {
-                            const yPos = y.getPixelForValue(val);
-                            ctx.strokeStyle = color;
-                            ctx.setLineDash([5, 5]);
-                            ctx.lineWidth = 1;
-                            ctx.beginPath();
-                            ctx.moveTo(left, yPos);
-                            ctx.lineTo(right, yPos);
-                            ctx.stroke();
-                            
-                            ctx.fillStyle = color;
-                            ctx.font = 'bold 10px sans-serif';
-                            ctx.fillText(`${label}: ${Math.round(val).toLocaleString()}`, right - 70, yPos - 5);
-                        };
-
-                        drawLine(maxV, 'rgba(34, 197, 94, 0.6)', 'MAX');
-                        drawLine(minV, 'rgba(239, 68, 68, 0.6)', 'MIN');
-                        drawLine(avgV, 'rgba(100, 116, 139, 0.6)', 'AVG');
-                        
-                        ctx.restore();
-                    }
-                }]
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { ticks: { font: { size: 9 } } }, x: { display: false } }
+                }
             });
         }
 
@@ -650,25 +532,16 @@
             const tbody = document.getElementById('data-table-body');
             document.getElementById('loading').classList.add('hidden');
             tbody.innerHTML = '';
-
             const displayData = [...allRecords].reverse().slice(0, 50);
-
             displayData.forEach(row => {
                 let displayTime = row.time;
                 if (row.time && row.time.length >= 8) {
                     const y = row.time.substring(0, 4);
                     const m = row.time.substring(4, 6);
                     const d = row.time.substring(6, 8);
-                    let t = "";
-                    if (row.time.includes('-')) {
-                        const parts = row.time.split('-');
-                        const hh = parts[1].substring(0, 2);
-                        const mm = parts[1].substring(2, 4);
-                        t = ` ${hh}:${mm}`;
-                    }
+                    let t = row.time.includes('-') ? ` ${row.time.split('-')[1].substring(0, 2)}:${row.time.split('-')[1].substring(2, 4)}` : "";
                     displayTime = `${y}/${m}/${d}${t}`;
                 }
-
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="px-6 py-4 text-gray-500 text-[11px] font-mono whitespace-nowrap">${displayTime}</td>
@@ -693,47 +566,32 @@
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
             const status = document.getElementById('submit-status');
-            
             btn.classList.add('btn-loading');
             status.innerText = 'GPS 驗證中...';
-            status.className = 'text-xs text-amber-600';
 
             let loc;
-            try {
-                loc = await getSecureLocation();
-            } catch (error) {
-                status.innerText = '儲存失敗：需開啟定位。';
-                status.className = 'text-xs text-red-600';
-                btn.classList.remove('btn-loading');
-                return;
+            try { loc = await getSecureLocation(); } catch (error) {
+                status.innerText = '儲存失敗：需開啟定位。'; status.className = 'text-xs text-red-600';
+                btn.classList.remove('btn-loading'); return;
             }
 
             status.innerText = '傳送中...';
             const type = document.querySelector('input[name="type"]:checked').value;
             const amount = document.getElementById('amount').value;
-            
             const payload = {
-                key: API_KEY,
-                timestamp: formatCustomDate(new Date()), 
-                category: document.getElementById('category').value,
-                item: document.getElementById('item').value,
-                expense: type === 'expense' ? amount : 0,
-                income: type === 'income' ? amount : 0,
-                lat: loc.lat,
-                lng: loc.lng
+                key: API_KEY, timestamp: formatCustomDate(new Date()), 
+                category: document.getElementById('category').value, item: document.getElementById('item').value,
+                expense: type === 'expense' ? amount : 0, income: type === 'income' ? amount : 0,
+                lat: loc.lat, lng: loc.lng
             };
 
             try {
-                // 傳送到新網址
                 await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                status.innerText = '儲存成功！';
-                status.className = 'text-xs text-green-600';
-                document.getElementById('item').value = '';
-                document.getElementById('amount').value = '';
+                status.innerText = '儲存成功！'; status.className = 'text-xs text-green-600';
+                document.getElementById('item').value = ''; document.getElementById('amount').value = '';
                 setTimeout(() => { fetchData(); status.innerText = ''; btn.classList.remove('btn-loading'); }, 1500);
             } catch (err) {
-                status.innerText = '同步失敗。';
-                status.className = 'text-xs text-red-600';
+                status.innerText = '同步失敗。'; status.className = 'text-xs text-red-600';
                 btn.classList.remove('btn-loading');
             }
         };
