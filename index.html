@@ -193,7 +193,8 @@
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIP8cEecVXdOM4QJvjQNsyLXvvPd260IBTeJwtiAweiBJnMeB8rmbHhmMaWIs8bU9AF1VccA6x3q_2/pub?output=csv';
-        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz9eG2fowxLQ4DolbPqaVhyHt30WH4eO7uBNw4xKyygeYeFhk4ZD29xmEJvNlGj5Ltz/exec'; 
+        // 已更新為新的 Web App 網址
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwx60KulJZs0v7QSIzNKb7-oAXFxNMlh5TT2maeCc2Ur-czliwwlFUP4LmCVUzzK2Y/exec'; 
         const API_KEY = 'YOUR_SECRET_KEY_HERE';
 
         let categories = { expense: [], income: [] };
@@ -723,6 +724,7 @@
             };
 
             try {
+                // 傳送到新網址
                 await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
                 status.innerText = '儲存成功！';
                 status.className = 'text-xs text-green-600';
