@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bob帳務系統</title>
     
     <!-- Web App / PWA 圖示設定 -->
@@ -25,7 +25,7 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f4f6; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
         .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .btn-loading { pointer-events: none; opacity: 0.7; }
         .collapse-content { transition: max-height 0.3s ease-out, opacity 0.3s ease-out; overflow: hidden; }
@@ -68,7 +68,6 @@
             gap: 2rem;
         }
 
-        /* 質感灰色正方框旋轉動畫 */
         .square-loader {
             position: relative;
             width: 60px;
@@ -79,19 +78,19 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            border: 3px solid #4b5563; /* Gray-600 */
+            border: 3px solid #4b5563;
             border-radius: 8px;
             animation: square-spin 2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
         }
 
         .square-loader div:nth-child(2) {
-            border-color: #9ca3af; /* Gray-400 */
+            border-color: #9ca3af;
             animation-delay: -0.5s;
             opacity: 0.6;
         }
 
         .square-loader div:nth-child(3) {
-            border-color: #d1d5db; /* Gray-300 */
+            border-color: #d1d5db;
             animation-delay: -1s;
             opacity: 0.3;
         }
@@ -113,6 +112,10 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+
+        /* 隱藏捲軸但保留功能 (可選，讓手機端更美觀) */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="p-4 md:p-8 text-gray-800">
@@ -274,7 +277,7 @@
         </section>
 
         <!-- 最近紀錄 -->
-        <section class="card overflow-hidden">
+        <section class="card overflow-hidden mb-8">
             <button onclick="toggleHistory()" class="w-full p-6 flex justify-between items-center hover:bg-gray-50 transition-colors focus:outline-none">
                 <h2 class="text-xl font-bold flex items-center gap-2">
                     <i data-lucide="list" class="w-5 h-5"></i> 最近紀錄 (前 50 筆)
@@ -283,15 +286,16 @@
             </button>
             
             <div id="history-content" class="collapse-content collapse-open">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-t border-gray-100">
-                        <thead class="bg-gray-50 border-b text-[10px] uppercase tracking-wider text-gray-500">
+                <!-- 解決手機滑動問題：增加 max-height 與 overflow-y-auto -->
+                <div class="overflow-x-auto overflow-y-auto max-h-[500px] border-t border-gray-100">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b text-[10px] uppercase tracking-wider text-gray-500 sticky top-0 z-20">
                             <tr>
-                                <th class="px-6 py-3 font-bold">時間</th>
-                                <th class="px-6 py-3 font-bold">類別</th>
-                                <th class="px-6 py-3 font-bold">項目</th>
-                                <th class="px-6 py-3 font-bold text-right">支出</th>
-                                <th class="px-6 py-3 font-bold text-right">收入</th>
+                                <th class="px-4 py-3 font-bold">時間</th>
+                                <th class="px-4 py-3 font-bold">類別</th>
+                                <th class="px-4 py-3 font-bold">項目</th>
+                                <th class="px-4 py-3 font-bold text-right">支出</th>
+                                <th class="px-4 py-3 font-bold text-right">收入</th>
                             </tr>
                         </thead>
                         <tbody id="data-table-body" class="divide-y divide-gray-200 text-sm">
@@ -361,6 +365,21 @@
             } catch (e) { return null; }
         }
 
+        /**
+         * 格式化輸出 MM/DD-HH:MM
+         */
+        function formatDisplayDate(str) {
+            if (!str || str.length < 8) return str;
+            const m = str.substring(4, 6);
+            const d = str.substring(6, 8);
+            if (str.includes('-')) {
+                const hh = str.split('-')[1].substring(0, 2);
+                const mm = str.split('-')[1].substring(2, 4);
+                return `${m}/${d}-${hh}:${mm}`;
+            }
+            return `${m}/${d}`;
+        }
+
         function formatCustomDate(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -387,9 +406,12 @@
         function changeView(view) {
             currentView = view;
             ['day', 'month', 'year', 'all'].forEach(v => {
-                document.getElementById(`tab-${v}`).classList.remove('tab-active');
+                const el = document.getElementById(`tab-${v}`);
+                if(el) el.classList.remove('tab-active');
             });
-            document.getElementById(`tab-${view}`).classList.add('tab-active');
+            const activeEl = document.getElementById(`tab-${view}`);
+            if(activeEl) activeEl.classList.add('tab-active');
+            
             const labels = { day: '今日', month: '本月', year: '今年', all: '累計' };
             document.getElementById('view-indicator').innerText = labels[view];
             calculateStats();
@@ -463,15 +485,45 @@
             const filtered = getFilteredRecords();
             filtered.forEach(r => {
                 if (r.lat && r.lng) {
-                    const color = r.income > 0 ? '#3b82f6' : '#ef4444';
+                    const isIncome = r.income > 0;
+                    const color = isIncome ? '#3b82f6' : '#ef4444';
+                    const amount = isIncome ? r.income : r.expense;
+                    const typeLabel = isIncome ? '收入' : '支出';
+                    const amountPrefix = isIncome ? '+' : '-';
+                    const displayTime = formatDisplayDate(r.time);
+
                     const marker = L.circleMarker([r.lat, r.lng], {
-                        radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8
+                        radius: 8, 
+                        fillColor: color, 
+                        color: "#fff", 
+                        weight: 2, 
+                        fillOpacity: 0.8
                     });
-                    marker.bindPopup(`<b style="color:${color}">${r.income > 0 ? '+' : '-'}$${(r.income || r.expense).toLocaleString()}</b><br/>${r.category}`);
+
+                    const popupHtml = `
+                        <div style="font-family: 'Noto Sans TC', sans-serif; min-width: 140px; padding: 4px;">
+                            <div style="font-size: 10px; color: #6b7280; margin-bottom: 4px;">${displayTime}</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 2px;">
+                                ${r.category}
+                            </div>
+                            <div style="font-size: 12px; color: #4b5563; margin-bottom: 8px;">
+                                ${r.item || '(無項目描述)'}
+                            </div>
+                            <div style="border-top: 1px solid #f3f4f6; padding-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 10px; background: ${color}22; color: ${color}; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${typeLabel}</span>
+                                <b style="color: ${color}; font-size: 16px;">${amountPrefix}$${amount.toLocaleString()}</b>
+                            </div>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupHtml);
                     markersGroup.addLayer(marker);
                 }
             });
-            if (markersGroup.getLayers().length > 0) map.fitBounds(markersGroup.getBounds(), { padding: [30,30] });
+
+            if (markersGroup.getLayers().length > 0) {
+                map.fitBounds(markersGroup.getBounds(), { padding: [40, 40] });
+            }
         }
 
         function getFilteredRecords() {
@@ -580,19 +632,22 @@
             [...allRecords].reverse().slice(0, 50).forEach(row => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="px-6 py-4 text-gray-500 text-[11px] font-mono">${row.time}</td>
-                    <td class="px-6 py-4 font-medium text-gray-700">${row.category || '-'}</td>
-                    <td class="px-6 py-4 text-gray-600">${row.item || '-'}</td>
-                    <td class="px-6 py-4 text-right text-red-600 font-bold">${row.expense > 0 ? '$' + row.expense.toLocaleString() : ''}</td>
-                    <td class="px-6 py-4 text-right text-green-600 font-bold">${row.income > 0 ? '$' + row.income.toLocaleString() : ''}</td>
+                    <td class="px-4 py-4 text-gray-500 text-[11px] font-mono">${formatDisplayDate(row.time)}</td>
+                    <td class="px-4 py-4 font-medium text-gray-700">${row.category || '-'}</td>
+                    <td class="px-4 py-4 text-gray-600">${row.item || '-'}</td>
+                    <td class="px-4 py-4 text-right text-red-600 font-bold">${row.expense > 0 ? '$' + row.expense.toLocaleString() : ''}</td>
+                    <td class="px-4 py-4 text-right text-green-600 font-bold">${row.income > 0 ? '$' + row.income.toLocaleString() : ''}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
         function updateCategoryOptions() {
-            const type = document.querySelector('input[name="type"]:checked').value;
-            document.getElementById('category').innerHTML = categories[type].map(c => `<option value="${c}">${c}</option>`).join('');
+            const typeSelect = document.querySelector('input[name="type"]:checked');
+            if (!typeSelect) return;
+            const type = typeSelect.value;
+            const catSelect = document.getElementById('category');
+            if(catSelect) catSelect.innerHTML = categories[type].map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         document.getElementById('record-form').onsubmit = async (e) => {
