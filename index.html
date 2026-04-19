@@ -6,20 +6,23 @@
     <title>Bob帳務系統</title>
     
     <!-- Web App / PWA 圖示設定 -->
-    <!-- iOS 加入主畫面圖示 -->
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Bobkao0527/bobmoney/a15ae2912099cceec16a39b4cd167315365828ad/bobmoney.jpeg">
-    <!-- Android / Chrome 顯示圖示 -->
     <link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/Bobkao0527/bobmoney/a15ae2912099cceec16a39b4cd167315365828ad/bobmoney.jpeg">
     
-    <!-- Web App 啟動畫面與全螢幕設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Bob帳務">
+    <meta name="apple-mobile-web-app-title" content="Bob帳務系統">
 
+    <!-- CSS / JS 引入 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Leaflet 地圖套件 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f4f6; }
@@ -28,12 +31,13 @@
         .collapse-content { transition: max-height 0.3s ease-out, opacity 0.3s ease-out; overflow: hidden; }
         .collapse-closed { max-height: 0; opacity: 0; pointer-events: none; }
         .collapse-open { max-height: 2000px; opacity: 1; }
-        .rotate-180 { transform: rotate(180deg); }
         .tab-active { background-color: #3b82f6; color: white; }
         #balance-card { transition: background-color 0.8s ease; }
         
         canvas { max-width: 100% !important; height: auto !important; }
         
+        #map { height: 350px; width: 100%; z-index: 10; border-radius: 0.75rem; background: #e5e7eb; }
+
         .app-icon {
             width: 36px;
             height: 36px;
@@ -42,9 +46,88 @@
             border: 2px solid white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        
+        /* 全螢幕載入動畫樣式 */
+        #global-loader {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(243, 244, 246, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        /* 質感灰色正方框旋轉動畫 */
+        .square-loader {
+            position: relative;
+            width: 60px;
+            height: 60px;
+        }
+
+        .square-loader div {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid #4b5563; /* Gray-600 */
+            border-radius: 8px;
+            animation: square-spin 2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+        }
+
+        .square-loader div:nth-child(2) {
+            border-color: #9ca3af; /* Gray-400 */
+            animation-delay: -0.5s;
+            opacity: 0.6;
+        }
+
+        .square-loader div:nth-child(3) {
+            border-color: #d1d5db; /* Gray-300 */
+            animation-delay: -1s;
+            opacity: 0.3;
+        }
+
+        @keyframes square-spin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        .loading-text {
+            color: #4b5563;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body class="p-4 md:p-8 text-gray-800">
+
+    <!-- 全螢幕載入動畫 -->
+    <div id="global-loader">
+        <div class="loader-container">
+            <div class="square-loader">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <p class="loading-text text-sm">資料載入中</p>
+        </div>
+    </div>
 
     <div class="max-w-4xl mx-auto">
         <!-- 頂部標題與刷新按鈕 -->
@@ -110,7 +193,7 @@
         <section class="mb-8 space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- 支出比例 (Pie Chart) -->
-                <div class="card p-6 flex flex-col h-[350px]">
+                <div class="card p-6 flex flex-col h-[380px]">
                     <h3 class="text-sm font-bold mb-4 flex items-center gap-2 text-gray-600">
                         <i data-lucide="pie-chart" class="w-4 h-4 text-purple-500"></i> 支出比例分佈
                     </h3>
@@ -119,7 +202,7 @@
                     </div>
                 </div>
                 <!-- 趨勢分析 (Bar + MA Line) -->
-                <div class="card p-6 flex flex-col h-[350px]">
+                <div class="card p-6 flex flex-col h-[380px]">
                     <h3 class="text-sm font-bold mb-4 flex items-center gap-2 text-gray-600">
                         <i data-lucide="trending-up" class="w-4 h-4 text-orange-500"></i> <span id="trend-title">支出趨勢</span>
                     </h3>
@@ -131,7 +214,7 @@
             <!-- 餘額瀑布圖 (Waterfall Chart) -->
             <div class="card p-6 flex flex-col h-[400px]">
                 <h3 class="text-sm font-bold mb-4 flex items-center gap-2 text-gray-600">
-                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-green-600"></i> 資金餘額瀑布圖 (全歷史數據)
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-green-600"></i> 資金餘額瀑布圖 (近 50 筆動態)
                 </h3>
                 <div class="flex-1 relative">
                     <canvas id="waterfallChart"></canvas>
@@ -165,8 +248,8 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">項目</label>
-                    <input type="text" id="item" placeholder="內容項目" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-sm" required>
+                    <label class="block text-sm font-medium text-gray-700">項目 (選填)</label>
+                    <input type="text" id="item" placeholder="內容項目" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">金額</label>
@@ -182,16 +265,24 @@
             </form>
         </section>
 
+        <!-- 消費足跡地圖區塊 -->
+        <section class="card p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-gray-700">
+                <i data-lucide="map-pin" class="w-5 h-5 text-red-500"></i> 消費足跡
+            </h2>
+            <div id="map" class="shadow-inner border border-gray-200"></div>
+        </section>
+
         <!-- 最近紀錄 -->
         <section class="card overflow-hidden">
             <button onclick="toggleHistory()" class="w-full p-6 flex justify-between items-center hover:bg-gray-50 transition-colors focus:outline-none">
                 <h2 class="text-xl font-bold flex items-center gap-2">
                     <i data-lucide="list" class="w-5 h-5"></i> 最近紀錄 (前 50 筆)
                 </h2>
-                <i id="chevron-icon" data-lucide="chevron-down" class="transition-transform duration-300 rotate-180"></i>
+                <i id="chevron-icon" data-lucide="chevron-up" class="transition-transform duration-300"></i>
             </button>
             
-            <div id="history-content" class="collapse-content collapse-closed">
+            <div id="history-content" class="collapse-content collapse-open">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-t border-gray-100">
                         <thead class="bg-gray-50 border-b text-[10px] uppercase tracking-wider text-gray-500">
@@ -204,12 +295,8 @@
                             </tr>
                         </thead>
                         <tbody id="data-table-body" class="divide-y divide-gray-200 text-sm">
-                            <!-- 資料將由 JS 填入 -->
                         </tbody>
                     </table>
-                </div>
-                <div id="loading" class="p-10 text-center text-gray-400 text-sm italic">
-                    正在同步雲端資料...
                 </div>
             </div>
         </section>
@@ -227,8 +314,36 @@
         let pieChart = null;
         let trendChart = null;
         let waterfallChart = null;
+        let map = null;
+        let markersGroup = null;
 
         lucide.createIcons();
+        initMap();
+
+        function showGlobalLoading(text = '資料載入中') {
+            const loader = document.getElementById('global-loader');
+            loader.querySelector('.loading-text').innerText = text;
+            loader.style.opacity = '1';
+            loader.style.display = 'flex';
+        }
+
+        function hideGlobalLoading() {
+            const loader = document.getElementById('global-loader');
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 300);
+        }
+
+        function initMap() {
+            map = L.map('map').setView([25.0330, 121.5654], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CARTO',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
+            markersGroup = L.featureGroup().addTo(map);
+        }
 
         function parseCustomDate(str) {
             if (!str || str.length < 8) return null;
@@ -236,8 +351,7 @@
                 const year = parseInt(str.substring(0, 4));
                 const month = parseInt(str.substring(4, 6)) - 1;
                 const day = parseInt(str.substring(6, 8));
-                let hour = 0;
-                let min = 0;
+                let hour = 0, min = 0;
                 if (str.includes('-')) {
                     const timePart = str.split('-')[1];
                     hour = parseInt(timePart.substring(0, 2)) || 0;
@@ -265,7 +379,7 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
                     (error) => reject(error),
-                    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                    { enableHighAccuracy: true, timeout: 8000 }
                 );
             });
         }
@@ -273,16 +387,14 @@
         function changeView(view) {
             currentView = view;
             ['day', 'month', 'year', 'all'].forEach(v => {
-                const btn = document.getElementById(`tab-${v}`);
-                if (btn) btn.classList.remove('tab-active');
+                document.getElementById(`tab-${v}`).classList.remove('tab-active');
             });
             document.getElementById(`tab-${view}`).classList.add('tab-active');
-            
             const labels = { day: '今日', month: '本月', year: '今年', all: '累計' };
             document.getElementById('view-indicator').innerText = labels[view];
-
             calculateStats();
             updateCharts();
+            updateMapMarkers();
         }
 
         function toggleHistory() {
@@ -290,17 +402,15 @@
             const icon = document.getElementById('chevron-icon');
             if (content.classList.contains('collapse-open')) {
                 content.classList.replace('collapse-open', 'collapse-closed');
-                icon.classList.add('rotate-180');
+                icon.style.transform = 'rotate(180deg)';
             } else {
                 content.classList.replace('collapse-closed', 'collapse-open');
-                icon.classList.remove('rotate-180');
+                icon.style.transform = 'rotate(0deg)';
             }
         }
 
         async function fetchData() {
-            const loading = document.getElementById('loading');
-            loading.classList.remove('hidden');
-
+            showGlobalLoading('資料載入中');
             try {
                 const response = await fetch(`${CSV_URL}&t=${new Date().getTime()}`);
                 const csvText = await response.text();
@@ -310,7 +420,6 @@
                     skipEmptyLines: true,
                     complete: function(results) {
                         const rawData = results.data;
-                        
                         let expSet = new Set();
                         let incSet = new Set();
                         rawData.forEach((row, idx) => {
@@ -323,96 +432,82 @@
                         updateCategoryOptions();
 
                         allRecords = rawData.slice(1).map(row => {
-                            const dateObj = parseCustomDate(row[0]);
                             return {
                                 time: row[0],
-                                dateObj: dateObj,
+                                dateObj: parseCustomDate(row[0]),
                                 category: row[1],
                                 item: row[2],
                                 expense: parseFloat(row[3]) || 0,
-                                income: parseFloat(row[4]) || 0
+                                income: parseFloat(row[4]) || 0,
+                                lat: parseFloat(row[5]) || null,
+                                lng: parseFloat(row[6]) || null
                             };
                         }).filter(r => r.time).sort((a,b) => a.dateObj - b.dateObj);
 
                         calculateStats();
                         renderTable();
                         updateCharts();
+                        updateMapMarkers();
+                        hideGlobalLoading();
                     }
                 });
             } catch (error) {
                 console.error('讀取失敗:', error);
-                loading.innerText = '載入失敗，請檢查網路連線。';
+                hideGlobalLoading();
             }
+        }
+
+        function updateMapMarkers() {
+            if (!markersGroup) return;
+            markersGroup.clearLayers();
+            const filtered = getFilteredRecords();
+            filtered.forEach(r => {
+                if (r.lat && r.lng) {
+                    const color = r.income > 0 ? '#3b82f6' : '#ef4444';
+                    const marker = L.circleMarker([r.lat, r.lng], {
+                        radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8
+                    });
+                    marker.bindPopup(`<b style="color:${color}">${r.income > 0 ? '+' : '-'}$${(r.income || r.expense).toLocaleString()}</b><br/>${r.category}`);
+                    markersGroup.addLayer(marker);
+                }
+            });
+            if (markersGroup.getLayers().length > 0) map.fitBounds(markersGroup.getBounds(), { padding: [30,30] });
+        }
+
+        function getFilteredRecords() {
+            const now = new Date();
+            return allRecords.filter(r => {
+                if (!r.dateObj) return false;
+                if (currentView === 'day') return r.dateObj.toDateString() === now.toDateString();
+                if (currentView === 'month') return r.dateObj.getMonth() === now.getMonth() && r.dateObj.getFullYear() === now.getFullYear();
+                if (currentView === 'year') return r.dateObj.getFullYear() === now.getFullYear();
+                return true;
+            });
         }
 
         function calculateStats() {
             const now = new Date(); 
-            let viewIn = 0;
-            let viewOut = 0;
-            let grandTotalIn = 0;
-            let grandTotalOut = 0;
-
+            let viewIn = 0, viewOut = 0, gIn = 0, gOut = 0;
             allRecords.forEach(r => {
                 if (!r.dateObj) return;
-
-                grandTotalIn += r.income;
-                grandTotalOut += r.expense;
-                
-                let match = false;
-                const rDate = r.dateObj;
-
-                switch(currentView) {
-                    case 'day':
-                        match = rDate.getFullYear() === now.getFullYear() && 
-                                rDate.getMonth() === now.getMonth() && 
-                                rDate.getDate() === now.getDate();
-                        break;
-                    case 'month':
-                        match = rDate.getMonth() === now.getMonth() && 
-                                rDate.getFullYear() === now.getFullYear();
-                        break;
-                    case 'year':
-                        match = rDate.getFullYear() === now.getFullYear();
-                        break;
-                    case 'all':
-                        match = true;
-                        break;
-                }
-
-                if (match) {
-                    viewIn += r.income;
-                    viewOut += r.expense;
-                }
+                gIn += r.income; gOut += r.expense;
+                const match = (currentView === 'day' && r.dateObj.toDateString() === now.toDateString()) ||
+                              (currentView === 'month' && r.dateObj.getMonth() === now.getMonth() && r.dateObj.getFullYear() === now.getFullYear()) ||
+                              (currentView === 'year' && r.dateObj.getFullYear() === now.getFullYear()) ||
+                              (currentView === 'all');
+                if (match) { viewIn += r.income; viewOut += r.expense; }
             });
-
-            const currentGrandBalance = grandTotalIn - grandTotalOut;
+            const gBal = gIn - gOut;
             document.getElementById('total-income').innerText = `$ ${viewIn.toLocaleString()}`;
             document.getElementById('total-expense').innerText = `$ ${viewOut.toLocaleString()}`;
-            const viewNet = viewIn - viewOut;
-            document.getElementById('balance').innerText = `$ ${viewNet.toLocaleString()}`;
-            document.getElementById('balance').className = `text-sm md:text-lg font-bold ${viewNet >= 0 ? 'text-blue-600' : 'text-orange-600'}`;
-            document.getElementById('grand-balance').innerText = `$ ${currentGrandBalance.toLocaleString()}`;
-
-            const card = document.getElementById('balance-card');
-            let h = 0;
-            if (currentGrandBalance <= 300) h = 0; 
-            else if (currentGrandBalance >= 800) h = 140; 
-            else h = Math.round(((currentGrandBalance - 300) / (800 - 300)) * 140);
-            
-            card.style.backgroundColor = `hsl(${h}, 65%, 40%)`;
+            document.getElementById('balance').innerText = `$ ${(viewIn - viewOut).toLocaleString()}`;
+            document.getElementById('grand-balance').innerText = `$ ${gBal.toLocaleString()}`;
+            const h = gBal <= 300 ? 0 : gBal >= 800 ? 140 : Math.round(((gBal-300)/500)*140);
+            document.getElementById('balance-card').style.backgroundColor = `hsl(${h}, 65%, 40%)`;
         }
 
         function updateCharts() {
-            const now = new Date();
-            const filtered = allRecords.filter(r => {
-                const rDate = r.dateObj;
-                if (!rDate) return false;
-                if (currentView === 'day') return rDate.toDateString() === now.toDateString();
-                if (currentView === 'month') return rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
-                if (currentView === 'year') return rDate.getFullYear() === now.getFullYear();
-                return true;
-            });
-
+            const filtered = getFilteredRecords();
             updatePieChart(filtered);
             updateTrendChart(filtered);
             updateWaterfallChart(allRecords); 
@@ -421,130 +516,71 @@
         function updatePieChart(data) {
             const expenseOnly = data.filter(r => r.expense > 0);
             const catMap = {};
-            expenseOnly.forEach(r => {
-                catMap[r.category] = (catMap[r.category] || 0) + r.expense;
-            });
-
-            const labels = Object.keys(catMap);
-            const values = Object.values(catMap);
+            expenseOnly.forEach(r => catMap[r.category] = (catMap[r.category] || 0) + r.expense);
             const ctx = document.getElementById('pieChart').getContext('2d');
             if (pieChart) pieChart.destroy();
-            
-            if (labels.length === 0) {
-                ctx.save(); ctx.font = "14px Arial"; ctx.textAlign = "center";
-                ctx.fillText("尚無支出數據", ctx.canvas.width/2, ctx.canvas.height/2); ctx.restore();
-                return;
-            }
-
             pieChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899', '#64748b']
-                    }]
+                    labels: Object.keys(catMap),
+                    datasets: [{ data: Object.values(catMap), backgroundColor: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'] }]
                 },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
         function updateTrendChart(data) {
             const groupMap = {};
-            let mode = 'day'; 
-            let title = '支出趨勢 (單位：日)';
-
-            if (currentView === 'day') {
-                mode = 'hour'; title = '今日支出分佈';
-                for(let i=0; i<24; i++) groupMap[`${String(i).padStart(2, '0')}:00`] = 0;
-            } else if (currentView === 'year') {
-                mode = 'month'; title = '年度支出趨勢';
-            }
-
-            document.getElementById('trend-title').innerText = title;
-            const dataSource = (currentView === 'all') ? allRecords : data;
-
+            const dataSource = currentView === 'all' ? allRecords : data;
             dataSource.forEach(r => {
                 if (!r.dateObj) return;
-                let key;
-                if (mode === 'hour') key = `${String(r.dateObj.getHours()).padStart(2, '0')}:00`;
-                else if (mode === 'month') key = `${r.dateObj.getFullYear()}/${String(r.dateObj.getMonth() + 1).padStart(2, '0')}`;
-                else key = `${r.dateObj.getFullYear()}/${r.dateObj.getMonth() + 1}/${r.dateObj.getDate()}`;
+                const key = `${r.dateObj.getFullYear()}/${r.dateObj.getMonth()+1}/${r.dateObj.getDate()}`;
                 groupMap[key] = (groupMap[key] || 0) + r.expense;
             });
-
-            const labels = Object.keys(groupMap).sort((a, b) => mode === 'hour' ? parseInt(a) - parseInt(b) : new Date(a) - new Date(b));
-            const values = labels.map(l => groupMap[l]);
+            const labels = Object.keys(groupMap).sort((a,b) => new Date(a) - new Date(b));
             const ctx = document.getElementById('trendChart').getContext('2d');
             if (trendChart) trendChart.destroy();
-
             trendChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels, datasets: [{ label: '支出金額', data: values, backgroundColor: 'rgba(59, 130, 246, 0.4)', borderRadius: 4 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 }, autoSkip: true, maxTicksLimit: 12 } } }
-                }
+                data: { labels, datasets: [{ label: '支出', data: labels.map(l => groupMap[l]), backgroundColor: '#3b82f666' }] },
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
         function updateWaterfallChart(data) {
-            if (data.length === 0) return;
-            const labels = ['初始'];
-            const waterfallData = [[0, 0]]; 
-            const colors = ['#64748b']; 
-            let runningBalance = 0;
-            const historyValues = [0];
-
-            data.forEach((r, idx) => {
+            const limit = 50;
+            const displayData = data.length > limit ? data.slice(-limit) : data;
+            let running = data.length > limit ? data.slice(0, -limit).reduce((acc, c) => acc + (c.income - c.expense), 0) : 0;
+            const waterfallValues = [[0, running]];
+            const labels = ['前期結餘'];
+            const colors = ['#94a3b8'];
+            displayData.forEach(r => {
                 const diff = r.income - r.expense;
-                const start = runningBalance;
-                runningBalance += diff;
-                labels.push(`${r.dateObj.getMonth()+1}/${r.dateObj.getDate()} ${r.item}`);
-                waterfallData.push([start, runningBalance]);
+                const start = running;
+                running += diff;
+                labels.push(`${r.dateObj.getMonth()+1}/${r.dateObj.getDate()}`);
+                waterfallValues.push([start, running]);
                 colors.push(diff >= 0 ? '#22c55e' : '#ef4444');
-                historyValues.push(runningBalance);
             });
-
-            labels.push('目前結餘');
-            waterfallData.push([0, runningBalance]);
+            labels.push('目前');
+            waterfallValues.push([0, running]);
             colors.push('#3b82f6');
-
             const ctx = document.getElementById('waterfallChart').getContext('2d');
             if (waterfallChart) waterfallChart.destroy();
-
             waterfallChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels, datasets: [{ data: waterfallData, backgroundColor: colors }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { ticks: { font: { size: 9 } } }, x: { display: false } }
-                }
+                data: { labels, datasets: [{ data: waterfallValues, backgroundColor: colors }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false } } }
             });
         }
 
         function renderTable() {
             const tbody = document.getElementById('data-table-body');
-            document.getElementById('loading').classList.add('hidden');
             tbody.innerHTML = '';
-            const displayData = [...allRecords].reverse().slice(0, 50);
-            displayData.forEach(row => {
-                let displayTime = row.time;
-                if (row.time && row.time.length >= 8) {
-                    const y = row.time.substring(0, 4);
-                    const m = row.time.substring(4, 6);
-                    const d = row.time.substring(6, 8);
-                    let t = row.time.includes('-') ? ` ${row.time.split('-')[1].substring(0, 2)}:${row.time.split('-')[1].substring(2, 4)}` : "";
-                    displayTime = `${y}/${m}/${d}${t}`;
-                }
+            [...allRecords].reverse().slice(0, 50).forEach(row => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="px-6 py-4 text-gray-500 text-[11px] font-mono whitespace-nowrap">${displayTime}</td>
+                    <td class="px-6 py-4 text-gray-500 text-[11px] font-mono">${row.time}</td>
                     <td class="px-6 py-4 font-medium text-gray-700">${row.category || '-'}</td>
                     <td class="px-6 py-4 text-gray-600">${row.item || '-'}</td>
                     <td class="px-6 py-4 text-right text-red-600 font-bold">${row.expense > 0 ? '$' + row.expense.toLocaleString() : ''}</td>
@@ -556,43 +592,31 @@
 
         function updateCategoryOptions() {
             const type = document.querySelector('input[name="type"]:checked').value;
-            const select = document.getElementById('category');
-            const options = categories[type] || [];
-            select.innerHTML = options.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-            if (options.length === 0) select.innerHTML = '<option value="">無類別資料</option>';
+            document.getElementById('category').innerHTML = categories[type].map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         document.getElementById('record-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
-            const status = document.getElementById('submit-status');
+            showGlobalLoading('正在獲取 GPS 定位...');
             btn.classList.add('btn-loading');
-            status.innerText = 'GPS 驗證中...';
-
-            let loc;
-            try { loc = await getSecureLocation(); } catch (error) {
-                status.innerText = '儲存失敗：需開啟定位。'; status.className = 'text-xs text-red-600';
-                btn.classList.remove('btn-loading'); return;
-            }
-
-            status.innerText = '傳送中...';
-            const type = document.querySelector('input[name="type"]:checked').value;
-            const amount = document.getElementById('amount').value;
-            const payload = {
-                key: API_KEY, timestamp: formatCustomDate(new Date()), 
-                category: document.getElementById('category').value, item: document.getElementById('item').value,
-                expense: type === 'expense' ? amount : 0, income: type === 'income' ? amount : 0,
-                lat: loc.lat, lng: loc.lng
-            };
-
             try {
+                const loc = await getSecureLocation();
+                showGlobalLoading('正在上傳雲端紀錄...');
+                const type = document.querySelector('input[name="type"]:checked').value;
+                const amount = document.getElementById('amount').value;
+                const payload = {
+                    key: API_KEY, timestamp: formatCustomDate(new Date()), 
+                    category: document.getElementById('category').value, item: document.getElementById('item').value,
+                    expense: type === 'expense' ? amount : 0, income: type === 'income' ? amount : 0,
+                    lat: loc.lat, lng: loc.lng
+                };
                 await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                status.innerText = '儲存成功！'; status.className = 'text-xs text-green-600';
                 document.getElementById('item').value = ''; document.getElementById('amount').value = '';
-                setTimeout(() => { fetchData(); status.innerText = ''; btn.classList.remove('btn-loading'); }, 1500);
+                setTimeout(() => { fetchData(); btn.classList.remove('btn-loading'); }, 1000);
             } catch (err) {
-                status.innerText = '同步失敗。'; status.className = 'text-xs text-red-600';
                 btn.classList.remove('btn-loading');
+                hideGlobalLoading();
             }
         };
 
