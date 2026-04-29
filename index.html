@@ -47,7 +47,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        /* 全螢幕載入動畫樣式 */
         #global-loader {
             display: flex;
             position: fixed;
@@ -83,17 +82,8 @@
             animation: square-spin 2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
         }
 
-        .square-loader div:nth-child(2) {
-            border-color: #9ca3af;
-            animation-delay: -0.5s;
-            opacity: 0.6;
-        }
-
-        .square-loader div:nth-child(3) {
-            border-color: #d1d5db;
-            animation-delay: -1s;
-            opacity: 0.3;
-        }
+        .square-loader div:nth-child(2) { border-color: #9ca3af; animation-delay: -0.5s; opacity: 0.6; }
+        .square-loader div:nth-child(3) { border-color: #d1d5db; animation-delay: -1s; opacity: 0.3; }
 
         @keyframes square-spin {
             0% { transform: rotate(0deg) scale(1); }
@@ -108,37 +98,27 @@
             animation: pulse 1.5s ease-in-out infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* 隱藏捲軸但保留功能 (可選，讓手機端更美觀) */
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="p-4 md:p-8 text-gray-800">
 
-    <!-- 全螢幕載入動畫 -->
     <div id="global-loader">
         <div class="loader-container">
             <div class="square-loader">
-                <div></div>
-                <div></div>
-                <div></div>
+                <div></div><div></div><div></div>
             </div>
             <p class="loading-text text-sm">資料載入中</p>
         </div>
     </div>
 
     <div class="max-w-4xl mx-auto">
-        <!-- 頂部標題與刷新按鈕 -->
         <header class="mb-8 flex justify-between items-center">
             <h1 class="text-2xl font-bold flex items-center gap-3">
                 <img src="https://raw.githubusercontent.com/Bobkao0527/bobmoney/a15ae2912099cceec16a39b4cd167315365828ad/bobmoney.jpeg" 
-                     alt="App Icon" 
-                     class="app-icon"
+                     alt="App Icon" class="app-icon"
                      onerror="this.src='https://ui-avatars.com/api/?name=Bob+Money&background=2563eb&color=fff'">
                 Bob帳務系統
             </h1>
@@ -147,7 +127,6 @@
             </button>
         </header>
 
-        <!-- 目前總餘額 -->
         <section class="mb-10 text-center">
             <div id="balance-card" class="card p-8 bg-slate-800 text-white inline-block min-w-full md:min-w-[400px] shadow-2xl relative overflow-hidden">
                 <div class="relative z-10">
@@ -162,7 +141,6 @@
 
         <hr class="mb-8 border-gray-300">
 
-        <!-- 區間篩選與統計 -->
         <section class="mb-8">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
                 <div class="flex bg-gray-200 p-1 rounded-xl w-full md:w-auto">
@@ -192,10 +170,8 @@
             </div>
         </section>
 
-        <!-- 圖表分析區塊 -->
         <section class="mb-8 space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- 支出比例 (Pie Chart) -->
                 <div class="card p-6 flex flex-col h-[380px]">
                     <h3 class="text-sm font-bold mb-4 flex items-center gap-2 text-gray-600">
                         <i data-lucide="pie-chart" class="w-4 h-4 text-purple-500"></i> 支出比例分佈
@@ -204,7 +180,6 @@
                         <canvas id="pieChart"></canvas>
                     </div>
                 </div>
-                <!-- 趨勢分析 (Bar + MA Line) -->
                 <div class="card p-6 flex flex-col h-[380px]">
                     <h3 class="text-sm font-bold mb-4 flex items-center gap-2 text-gray-600">
                         <i data-lucide="trending-up" class="w-4 h-4 text-orange-500"></i> <span id="trend-title">支出趨勢</span>
@@ -214,7 +189,6 @@
                     </div>
                 </div>
             </div>
-            <!-- 餘額瀑布圖 (Waterfall Chart) -->
             <div class="card p-6 flex flex-col h-[400px]">
                 <h3 class="text-sm font-bold mb-4 flex items-center gap-2 text-gray-600">
                     <i data-lucide="bar-chart-3" class="w-4 h-4 text-green-600"></i> 資金餘額瀑布圖 (近 50 筆動態)
@@ -225,7 +199,6 @@
             </div>
         </section>
 
-        <!-- 記帳表單 -->
         <section class="card p-6 mb-8">
             <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-gray-700">
                 <i data-lucide="plus-circle" class="w-5 h-5 text-blue-500"></i> 新增紀錄
@@ -258,7 +231,6 @@
                     <label class="block text-sm font-medium text-gray-700">金額</label>
                     <input type="number" id="amount" placeholder="金額" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-sm" required>
                 </div>
-                
                 <div class="lg:col-span-4 flex justify-between items-center gap-4 mt-2">
                     <div id="submit-status" class="text-xs font-medium"></div>
                     <button type="submit" id="submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center gap-2">
@@ -268,7 +240,6 @@
             </form>
         </section>
 
-        <!-- 消費足跡地圖區塊 -->
         <section class="card p-6 mb-8">
             <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-gray-700">
                 <i data-lucide="map-pin" class="w-5 h-5 text-red-500"></i> 消費足跡
@@ -276,7 +247,6 @@
             <div id="map" class="shadow-inner border border-gray-200"></div>
         </section>
 
-        <!-- 最近紀錄 -->
         <section class="card overflow-hidden mb-8">
             <button onclick="toggleHistory()" class="w-full p-6 flex justify-between items-center hover:bg-gray-50 transition-colors focus:outline-none">
                 <h2 class="text-xl font-bold flex items-center gap-2">
@@ -284,9 +254,7 @@
                 </h2>
                 <i id="chevron-icon" data-lucide="chevron-up" class="transition-transform duration-300"></i>
             </button>
-            
             <div id="history-content" class="collapse-content collapse-open">
-                <!-- 解決手機滑動問題：增加 max-height 與 overflow-y-auto -->
                 <div class="overflow-x-auto overflow-y-auto max-h-[500px] border-t border-gray-100">
                     <table class="w-full text-left">
                         <thead class="bg-gray-50 border-b text-[10px] uppercase tracking-wider text-gray-500 sticky top-0 z-20">
@@ -298,8 +266,7 @@
                                 <th class="px-4 py-3 font-bold text-right">收入</th>
                             </tr>
                         </thead>
-                        <tbody id="data-table-body" class="divide-y divide-gray-200 text-sm">
-                        </tbody>
+                        <tbody id="data-table-body" class="divide-y divide-gray-200 text-sm"></tbody>
                     </table>
                 </div>
             </div>
@@ -315,11 +282,7 @@
         let allRecords = [];
         let currentView = 'month'; 
         
-        let pieChart = null;
-        let trendChart = null;
-        let waterfallChart = null;
-        let map = null;
-        let markersGroup = null;
+        let pieChart = null, trendChart = null, waterfallChart = null, map = null, markersGroup = null;
 
         lucide.createIcons();
         initMap();
@@ -327,24 +290,19 @@
         function showGlobalLoading(text = '資料載入中') {
             const loader = document.getElementById('global-loader');
             loader.querySelector('.loading-text').innerText = text;
-            loader.style.opacity = '1';
-            loader.style.display = 'flex';
+            loader.style.opacity = '1'; loader.style.display = 'flex';
         }
 
         function hideGlobalLoading() {
             const loader = document.getElementById('global-loader');
             loader.style.opacity = '0';
-            setTimeout(() => {
-                loader.style.display = 'none';
-            }, 300);
+            setTimeout(() => { loader.style.display = 'none'; }, 300);
         }
 
         function initMap() {
             map = L.map('map').setView([25.0330, 121.5654], 13);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; CARTO',
-                subdomains: 'abcd',
-                maxZoom: 20
+                attribution: '&copy; CARTO', subdomains: 'abcd', maxZoom: 20
             }).addTo(map);
             markersGroup = L.featureGroup().addTo(map);
         }
@@ -365,13 +323,9 @@
             } catch (e) { return null; }
         }
 
-        /**
-         * 格式化輸出 MM/DD-HH:MM
-         */
         function formatDisplayDate(str) {
             if (!str || str.length < 8) return str;
-            const m = str.substring(4, 6);
-            const d = str.substring(6, 8);
+            const m = str.substring(4, 6), d = str.substring(6, 8);
             if (str.includes('-')) {
                 const hh = str.split('-')[1].substring(0, 2);
                 const mm = str.split('-')[1].substring(2, 4);
@@ -381,24 +335,17 @@
         }
 
         function formatCustomDate(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            const hh = String(date.getHours()).padStart(2, '0');
-            const mm = String(date.getMinutes()).padStart(2, '0');
+            const y = date.getFullYear(), m = String(date.getMonth() + 1).padStart(2, '0'), d = String(date.getDate()).padStart(2, '0');
+            const hh = String(date.getHours()).padStart(2, '0'), mm = String(date.getMinutes()).padStart(2, '0');
             return `${y}${m}${d}-${hh}${mm}`;
         }
 
         function getSecureLocation() {
             return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) {
-                    reject(new Error('瀏覽器不支援定位'));
-                    return;
-                }
+                if (!navigator.geolocation) { reject(new Error('瀏覽器不支援定位')); return; }
                 navigator.geolocation.getCurrentPosition(
-                    (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
-                    (error) => reject(error),
-                    { enableHighAccuracy: true, timeout: 8000 }
+                    (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+                    (e) => reject(e), { enableHighAccuracy: true, timeout: 8000 }
                 );
             });
         }
@@ -406,22 +353,16 @@
         function changeView(view) {
             currentView = view;
             ['day', 'month', 'year', 'all'].forEach(v => {
-                const el = document.getElementById(`tab-${v}`);
-                if(el) el.classList.remove('tab-active');
+                document.getElementById(`tab-${v}`)?.classList.remove('tab-active');
             });
-            const activeEl = document.getElementById(`tab-${view}`);
-            if(activeEl) activeEl.classList.add('tab-active');
-            
+            document.getElementById(`tab-${view}`)?.classList.add('tab-active');
             const labels = { day: '今日', month: '本月', year: '今年', all: '累計' };
             document.getElementById('view-indicator').innerText = labels[view];
-            calculateStats();
-            updateCharts();
-            updateMapMarkers();
+            calculateStats(); updateCharts(); updateMapMarkers();
         }
 
         function toggleHistory() {
-            const content = document.getElementById('history-content');
-            const icon = document.getElementById('chevron-icon');
+            const content = document.getElementById('history-content'), icon = document.getElementById('chevron-icon');
             if (content.classList.contains('collapse-open')) {
                 content.classList.replace('collapse-open', 'collapse-closed');
                 icon.style.transform = 'rotate(180deg)';
@@ -436,14 +377,11 @@
             try {
                 const response = await fetch(`${CSV_URL}&t=${new Date().getTime()}`);
                 const csvText = await response.text();
-                
                 Papa.parse(csvText, {
-                    header: false,
-                    skipEmptyLines: true,
+                    header: false, skipEmptyLines: true,
                     complete: function(results) {
                         const rawData = results.data;
-                        let expSet = new Set();
-                        let incSet = new Set();
+                        let expSet = new Set(), incSet = new Set();
                         rawData.forEach((row, idx) => {
                             if (idx === 0) return;
                             if (row[10]?.trim()) expSet.add(row[10].trim());
@@ -452,78 +390,35 @@
                         categories.expense = Array.from(expSet);
                         categories.income = Array.from(incSet);
                         updateCategoryOptions();
-
-                        allRecords = rawData.slice(1).map(row => {
-                            return {
-                                time: row[0],
-                                dateObj: parseCustomDate(row[0]),
-                                category: row[1],
-                                item: row[2],
-                                expense: parseFloat(row[3]) || 0,
-                                income: parseFloat(row[4]) || 0,
-                                lat: parseFloat(row[5]) || null,
-                                lng: parseFloat(row[6]) || null
-                            };
-                        }).filter(r => r.time).sort((a,b) => a.dateObj - b.dateObj);
-
-                        calculateStats();
-                        renderTable();
-                        updateCharts();
-                        updateMapMarkers();
+                        allRecords = rawData.slice(1).map(row => ({
+                            time: row[0], dateObj: parseCustomDate(row[0]), category: row[1], item: row[2],
+                            expense: parseFloat(row[3]) || 0, income: parseFloat(row[4]) || 0,
+                            lat: parseFloat(row[5]) || null, lng: parseFloat(row[6]) || null
+                        })).filter(r => r.time).sort((a,b) => a.dateObj - b.dateObj);
+                        calculateStats(); renderTable(); updateCharts(); updateMapMarkers();
                         hideGlobalLoading();
                     }
                 });
-            } catch (error) {
-                console.error('讀取失敗:', error);
-                hideGlobalLoading();
-            }
+            } catch (error) { hideGlobalLoading(); }
         }
 
         function updateMapMarkers() {
             if (!markersGroup) return;
             markersGroup.clearLayers();
-            const filtered = getFilteredRecords();
-            filtered.forEach(r => {
+            getFilteredRecords().forEach(r => {
                 if (r.lat && r.lng) {
-                    const isIncome = r.income > 0;
-                    const color = isIncome ? '#3b82f6' : '#ef4444';
-                    const amount = isIncome ? r.income : r.expense;
-                    const typeLabel = isIncome ? '收入' : '支出';
-                    const amountPrefix = isIncome ? '+' : '-';
-                    const displayTime = formatDisplayDate(r.time);
-
-                    const marker = L.circleMarker([r.lat, r.lng], {
-                        radius: 8, 
-                        fillColor: color, 
-                        color: "#fff", 
-                        weight: 2, 
-                        fillOpacity: 0.8
-                    });
-
-                    const popupHtml = `
-                        <div style="font-family: 'Noto Sans TC', sans-serif; min-width: 140px; padding: 4px;">
-                            <div style="font-size: 10px; color: #6b7280; margin-bottom: 4px;">${displayTime}</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 2px;">
-                                ${r.category}
-                            </div>
-                            <div style="font-size: 12px; color: #4b5563; margin-bottom: 8px;">
-                                ${r.item || '(無項目描述)'}
-                            </div>
-                            <div style="border-top: 1px solid #f3f4f6; padding-top: 6px; display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 10px; background: ${color}22; color: ${color}; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${typeLabel}</span>
-                                <b style="color: ${color}; font-size: 16px;">${amountPrefix}$${amount.toLocaleString()}</b>
-                            </div>
-                        </div>
-                    `;
-
-                    marker.bindPopup(popupHtml);
+                    const isInc = r.income > 0, color = isInc ? '#3b82f6' : '#ef4444', amount = isInc ? r.income : r.expense;
+                    const marker = L.circleMarker([r.lat, r.lng], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8 });
+                    marker.bindPopup(`<div style="font-family: 'Noto Sans TC'; min-width: 140px;">
+                        <div style="font-size: 10px; color: #6b7280;">${formatDisplayDate(r.time)}</div>
+                        <div style="font-size: 14px; font-weight: 700;">${r.category}</div>
+                        <div style="font-size: 12px; color: #4b5563;">${r.item || '(無項目)'}</div>
+                        <b style="color: ${color}; font-size: 16px;">${isInc ? '+' : '-'}$${amount.toLocaleString()}</b>
+                    </div>`);
                     markersGroup.addLayer(marker);
                 }
             });
-
-            if (markersGroup.getLayers().length > 0) {
-                map.fitBounds(markersGroup.getBounds(), { padding: [40, 40] });
-            }
+            if (markersGroup.getLayers().length > 0) map.fitBounds(markersGroup.getBounds(), { padding: [40, 40] });
         }
 
         function getFilteredRecords() {
@@ -538,15 +433,13 @@
         }
 
         function calculateStats() {
-            const now = new Date(); 
-            let viewIn = 0, viewOut = 0, gIn = 0, gOut = 0;
+            const now = new Date(); let viewIn = 0, viewOut = 0, gIn = 0, gOut = 0;
             allRecords.forEach(r => {
                 if (!r.dateObj) return;
                 gIn += r.income; gOut += r.expense;
                 const match = (currentView === 'day' && r.dateObj.toDateString() === now.toDateString()) ||
                               (currentView === 'month' && r.dateObj.getMonth() === now.getMonth() && r.dateObj.getFullYear() === now.getFullYear()) ||
-                              (currentView === 'year' && r.dateObj.getFullYear() === now.getFullYear()) ||
-                              (currentView === 'all');
+                              (currentView === 'year' && r.dateObj.getFullYear() === now.getFullYear()) || (currentView === 'all');
                 if (match) { viewIn += r.income; viewOut += r.expense; }
             });
             const gBal = gIn - gOut;
@@ -566,113 +459,115 @@
         }
 
         function updatePieChart(data) {
-            const expenseOnly = data.filter(r => r.expense > 0);
-            const catMap = {};
-            expenseOnly.forEach(r => catMap[r.category] = (catMap[r.category] || 0) + r.expense);
+            const expOnly = data.filter(r => r.expense > 0), catMap = {};
+            expOnly.forEach(r => catMap[r.category] = (catMap[r.category] || 0) + r.expense);
             const ctx = document.getElementById('pieChart').getContext('2d');
             if (pieChart) pieChart.destroy();
             pieChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(catMap),
-                    datasets: [{ data: Object.values(catMap), backgroundColor: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'] }]
-                },
+                type: 'pie', data: { labels: Object.keys(catMap), datasets: [{ data: Object.values(catMap), backgroundColor: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'] }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
+        /**
+         * 更新趨勢圖：日檢視時顯示 0-23 小時
+         */
         function updateTrendChart(data) {
             const groupMap = {};
-            const dataSource = currentView === 'all' ? allRecords : data;
-            dataSource.forEach(r => {
-                if (!r.dateObj) return;
-                const key = `${r.dateObj.getFullYear()}/${r.dateObj.getMonth()+1}/${r.dateObj.getDate()}`;
-                groupMap[key] = (groupMap[key] || 0) + r.expense;
-            });
-            const labels = Object.keys(groupMap).sort((a,b) => new Date(a) - new Date(b));
+            let labels = [];
+            const titleEl = document.getElementById('trend-title');
+
+            if (currentView === 'day') {
+                titleEl.innerText = '今日支出時段分佈';
+                // 初始化 0-23 小時
+                for (let i = 0; i < 24; i++) {
+                    const key = `${String(i).padStart(2, '0')}:00`;
+                    groupMap[key] = 0;
+                    labels.push(key);
+                }
+                data.forEach(r => {
+                    if (r.expense > 0 && r.dateObj) {
+                        const hourKey = `${String(r.dateObj.getHours()).padStart(2, '0')}:00`;
+                        groupMap[hourKey] += r.expense;
+                    }
+                });
+            } else {
+                titleEl.innerText = '支出趨勢';
+                const dataSource = currentView === 'all' ? allRecords : data;
+                dataSource.forEach(r => {
+                    if (r.expense > 0 && r.dateObj) {
+                        const key = `${r.dateObj.getFullYear()}/${r.dateObj.getMonth()+1}/${r.dateObj.getDate()}`;
+                        groupMap[key] = (groupMap[key] || 0) + r.expense;
+                    }
+                });
+                labels = Object.keys(groupMap).sort((a,b) => new Date(a) - new Date(b));
+            }
+
             const ctx = document.getElementById('trendChart').getContext('2d');
             if (trendChart) trendChart.destroy();
             trendChart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels, datasets: [{ label: '支出', data: labels.map(l => groupMap[l]), backgroundColor: '#3b82f666' }] },
-                options: { responsive: true, maintainAspectRatio: false }
+                data: { labels, datasets: [{ label: '支出', data: labels.map(l => groupMap[l]), backgroundColor: '#3b82f666', borderRadius: 4 }] },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                        x: { grid: { display: false } }
+                    }
+                }
             });
         }
 
         function updateWaterfallChart(data) {
-            const limit = 50;
-            const displayData = data.length > limit ? data.slice(-limit) : data;
-            let running = data.length > limit ? data.slice(0, -limit).reduce((acc, c) => acc + (c.income - c.expense), 0) : 0;
-            const waterfallValues = [[0, running]];
-            const labels = ['前期結餘'];
-            const colors = ['#94a3b8'];
-            displayData.forEach(r => {
-                const diff = r.income - r.expense;
-                const start = running;
-                running += diff;
+            const limit = 50, disp = data.length > limit ? data.slice(-limit) : data;
+            let run = data.length > limit ? data.slice(0, -limit).reduce((acc, c) => acc + (c.income - c.expense), 0) : 0;
+            const vals = [[0, run]], labels = ['前期結餘'], cols = ['#94a3b8'];
+            disp.forEach(r => {
+                const diff = r.income - r.expense, start = run; run += diff;
                 labels.push(`${r.dateObj.getMonth()+1}/${r.dateObj.getDate()}`);
-                waterfallValues.push([start, running]);
-                colors.push(diff >= 0 ? '#22c55e' : '#ef4444');
+                vals.push([start, run]); cols.push(diff >= 0 ? '#22c55e' : '#ef4444');
             });
-            labels.push('目前');
-            waterfallValues.push([0, running]);
-            colors.push('#3b82f6');
+            labels.push('目前'); vals.push([0, run]); cols.push('#3b82f6');
             const ctx = document.getElementById('waterfallChart').getContext('2d');
             if (waterfallChart) waterfallChart.destroy();
             waterfallChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels, datasets: [{ data: waterfallValues, backgroundColor: colors }] },
+                type: 'bar', data: { labels, datasets: [{ data: vals, backgroundColor: cols }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false } } }
             });
         }
 
         function renderTable() {
-            const tbody = document.getElementById('data-table-body');
-            tbody.innerHTML = '';
+            const tbody = document.getElementById('data-table-body'); tbody.innerHTML = '';
             [...allRecords].reverse().slice(0, 50).forEach(row => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-4 py-4 text-gray-500 text-[11px] font-mono">${formatDisplayDate(row.time)}</td>
+                tr.innerHTML = `<td class="px-4 py-4 text-gray-500 text-[11px] font-mono">${formatDisplayDate(row.time)}</td>
                     <td class="px-4 py-4 font-medium text-gray-700">${row.category || '-'}</td>
                     <td class="px-4 py-4 text-gray-600">${row.item || '-'}</td>
                     <td class="px-4 py-4 text-right text-red-600 font-bold">${row.expense > 0 ? '$' + row.expense.toLocaleString() : ''}</td>
-                    <td class="px-4 py-4 text-right text-green-600 font-bold">${row.income > 0 ? '$' + row.income.toLocaleString() : ''}</td>
-                `;
+                    <td class="px-4 py-4 text-right text-green-600 font-bold">${row.income > 0 ? '$' + row.income.toLocaleString() : ''}</td>`;
                 tbody.appendChild(tr);
             });
         }
 
         function updateCategoryOptions() {
-            const typeSelect = document.querySelector('input[name="type"]:checked');
-            if (!typeSelect) return;
-            const type = typeSelect.value;
+            const type = document.querySelector('input[name="type"]:checked')?.value;
             const catSelect = document.getElementById('category');
             if(catSelect) catSelect.innerHTML = categories[type].map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         document.getElementById('record-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            showGlobalLoading('正在獲取 GPS 定位...');
-            btn.classList.add('btn-loading');
+            e.preventDefault(); const btn = document.getElementById('submit-btn');
+            showGlobalLoading('正在獲取 GPS 定位...'); btn.classList.add('btn-loading');
             try {
                 const loc = await getSecureLocation();
                 showGlobalLoading('正在上傳雲端紀錄...');
-                const type = document.querySelector('input[name="type"]:checked').value;
-                const amount = document.getElementById('amount').value;
-                const payload = {
-                    key: API_KEY, timestamp: formatCustomDate(new Date()), 
-                    category: document.getElementById('category').value, item: document.getElementById('item').value,
-                    expense: type === 'expense' ? amount : 0, income: type === 'income' ? amount : 0,
-                    lat: loc.lat, lng: loc.lng
-                };
+                const type = document.querySelector('input[name="type"]:checked').value, amount = document.getElementById('amount').value;
+                const payload = { key: API_KEY, timestamp: formatCustomDate(new Date()), category: document.getElementById('category').value, item: document.getElementById('item').value, expense: type === 'expense' ? amount : 0, income: type === 'income' ? amount : 0, lat: loc.lat, lng: loc.lng };
                 await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
                 document.getElementById('item').value = ''; document.getElementById('amount').value = '';
                 setTimeout(() => { fetchData(); btn.classList.remove('btn-loading'); }, 1000);
-            } catch (err) {
-                btn.classList.remove('btn-loading');
-                hideGlobalLoading();
-            }
+            } catch (err) { btn.classList.remove('btn-loading'); hideGlobalLoading(); }
         };
 
         window.onload = fetchData;
